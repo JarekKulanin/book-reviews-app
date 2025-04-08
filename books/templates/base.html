@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Book Reviews{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'books_list' %}"><i class="bi bi-book"></i> Recenzarnia</a>
+        <div class="ms-auto">
+            {% if user.is_authenticated %}
+                <span class="me-3">Witaj, <strong>{{ user.username }}</strong>!</span>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm">Wyloguj</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm me-2">Zaloguj się</a>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Zarejestruj się</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    {% block content %}
+    {% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

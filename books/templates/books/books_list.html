@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .book-cover-hover {
+        transition: transform 0.3s ease;
+    }
+    .book-cover-hover:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block title %}Lista książek{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Twoje książki w jednym miejscu!</h1>
+        {% if user.is_staff %}
+            <a href="{% url 'add_book' %}" class="btn btn-success">+ Dodaj książkę</a>
+        {% endif %}
+    </div>
+    <div class="mb-4">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link {% if not chosen_cat %}active{% endif %}" href="/">Wszystkie</a>
+            </li>
+            {% for cat in categories %}
+            <li class="nav-item">
+                <a class="nav-link {% if chosen_cat == cat.id %}active{% endif %}" href="?category={{ cat.id }}">
+                    {{ cat.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <form method="get" class="mb-4 d-flex" role="search">
+        <input type="hidden" name="category" value="{{ chosen_cat|default_if_none:'' }}">
+        <input class="form-control me-2" type="search" name="q" placeholder="Szukaj po tytule lub autorze" value="{{ search_phrase }}">
+        <button class="btn btn-outline-primary" type="submit">Szukaj</button>
+    </form>
+    <div class="row">
+        {% for book in books %}
+        <div class="col-md-3">
+            <div class="card mb-4">
+                {% if book.cover %}
+                    <a href="{% url 'book_detail' book.pk %}">
+                        <img src="{{ book.cover.url }}" class="card-img-top book-cover-hover" style="height: 400px; object-fit: cover;" alt="{{ book.name }}">
+                    </a>
+                {% else %}
+                    <a href="{% url 'book_detail' book.pk %}">
+                        <img src="{% static 'images/no_cover.jpg' %}" class="card-img-top book-cover-hover" style="height: 400px; object-fit: cover;" alt="Brak okładki">
+                    </a>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'book_detail' book.pk %}" class="text-decoration-none">
+                            {{ book.name }}
+                        </a>    
+                    </h5>
+                    <h6 class="card-subtitle text-muted">{{ book.author }}</h6>
+                    <p class="card-text">{{ book.description|truncatechars:100 }}</p>
+                    <p>Średnia ocena: {{ book.avg_rate }}</p>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>Brak książek w bazie danych.</p>
+        {% endfor %}
+    </div>
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page=1">Pierwsza</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Pierwsza</span></li>
+            {% endif %}
+    
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.previous_page_number }}">«</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">«</span></li>
+            {% endif %}
+    
+            {% for num in page_obj.paginator.page_range %}
+                {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+    
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.next_page_number }}">»</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">»</span></li>
+            {% endif %}
+    
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Ostatnia</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Ostatnia</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endblock %}

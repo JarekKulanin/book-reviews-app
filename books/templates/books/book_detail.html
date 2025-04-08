@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ book.name }}{% endblock %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row mb-4 align-items-start">
+        <div class="col-md-3">
+            {% if book.cover %}
+                <img src="{{ book.cover.url }}" class="img-fluid rounded shadow-sm" style="height: 100%; max-height: 400px; object-fit: cover;" alt="{{ book.name }}">
+            {% else %}
+                <img src="{% static 'images/no_cover.jpg' %}" class="img-fluid rounded shadow-sm" style="height: 100%; max-height: 400px; object-fit: cover;" alt="Brak okładki">
+            {% endif %}
+        </div>
+    
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 d-flex flex-column justify-content-between" style="min-height: 400px;">
+                    <div>
+                        <h1>{{ book.name }}</h1>
+                        <h5 class="text-muted">{{ book.author }}</h5>
+                        <p><strong>Kategoria:</strong> {{ book.category.name }}</p>
+                    </div>
+                    <div class="mt-3">
+                        <!-- <p class="mb-0"><strong>Średnia ocena:</strong> <span data-avg-rating>{{ book.avg_rate }}</span></p> -->
+                        <p>Średnia ocena: <span class="badge bg-warning text-dark" data-avg-rating><i class="bi bi-star-fill"></i> {{ book.avg_rate }}</span></p>
+                    </div>
+                </div>
+                <div class="ms-3">
+                    <a href="{% url 'books_list' %}" class="btn btn-outline-secondary">← Wróć</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p><strong>Opis</strong></p>
+    <p>{{ book.description }}</p>
+
+    <hr>
+        <h4>Recenzje</h4>
+    <hr>
+
+    <div id="reviews-container">
+        {% if reviews %}
+            {% for review in reviews %}
+                {% include "books/review_item.html" %}
+            {% endfor %}
+    
+            <nav>
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">«</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">‹</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">«</span></li>
+                        <li class="page-item disabled"><span class="page-link">‹</span></li>
+                    {% endif %}
+    
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">›</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">»</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">›</span></li>
+                        <li class="page-item disabled"><span class="page-link">»</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+    
+        {% else %}
+            <p>Brak recenzji dla tej książki.</p>
+        {% endif %}
+    </div>
+    
+    <h4>Dodaj recenzję</h4>
+    {% if user.is_authenticated and not user_review %}
+        <form id="review-form" method="post" action="{% url 'add_review_ajax' book.pk %}" class="mb-4">
+            {% csrf_token %}
+            {{ review_form.as_p }}
+            <button type="submit" class="btn btn-primary">Dodaj recenzję</button>
+        </form>
+    {% endif %}
+
+    {% if not user.is_authenticated %}
+        <p class="text-muted">Zaloguj się, aby dodać recenzję.</p>
+    {% elif user_review %}
+        <p class="text-muted">Już dodałeś recenzję tej książki.</p>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('review-form');
+            if (form) {
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const url = form.getAttribute('action');
+                    const formData = new FormData(form);
+        
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: formData
+                    });
+        
+                    const data = await response.json();
+        
+                    if (response.ok) {
+                        // dodaj recenzję do DOM
+                        document.getElementById('reviews-container').innerHTML += data.review_html;
+        
+                        // zaktualizuj średnią ocenę
+                        document.querySelector('[data-avg-rating]').innerText = data.avg_rating;
+        
+                        // ukryj formularz
+                        form.remove();
+                    } else {
+                        alert(data.error || 'Błąd formularza.');
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
+
