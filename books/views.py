@@ -5,9 +5,14 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.contrib.admin.views.decorators import staff_member_required
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
+from rest_framework import status
 
 from .forms import ReviewForm, BookForm
 from .models import Book, Category
+from .serializers import BookSerializer
 
 
 def books_list(request):
@@ -39,6 +44,7 @@ def books_list(request):
 
     return render(request, 'books/books_list.html', context)
 
+
 def book_detail(request, pk):
     book = get_object_or_404(Book, pk=pk)
     reviews = book.reviews.all().order_by('-id')
@@ -64,6 +70,7 @@ def book_detail(request, pk):
     }
     return render(request, 'books/book_detail.html', context)
 
+
 def add_review_ajax(request, pk):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Musisz być zalogowany'}, status=403)
@@ -81,15 +88,16 @@ def add_review_ajax(request, pk):
         review.save()
 
         return JsonResponse({
-            'message': 'Recenzja dodana!',
             'review_html': render_to_string('books/review_item.html', {'review': review}, request=request),
             'avg_rating': book.avg_rate
         })
 
     return JsonResponse({'errors': form.errors}, status=400)
 
+
 @staff_member_required
 def add_book(request):
+
     if request.method == 'POST':
         form = BookForm(request.POST, request.FILES)
         if form.is_valid():
@@ -99,3 +107,20 @@ def add_book(request):
         form = BookForm()
 
     return render(request, 'books/add_book.html', {'form': form})
+
+
+class AddBookAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        serializer = BookSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class CategoryListAPIView(APIView):
+    def get(self, request):
+        categories = Category.objects.all().values('id', 'name')
+        return Response(list(categories))

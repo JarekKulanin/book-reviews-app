@@ -2,23 +2,16 @@
 {% load static %}
 
 {% block extra_head %}
-<style>
-    .book-cover-hover {
-        transition: transform 0.3s ease;
-    }
-    .book-cover-hover:hover {
-        transform: scale(1.05);
-    }
-</style>
+    <link rel="stylesheet" href="{% static 'css/books_list.css' %}">
 {% endblock %}
 
-{% block title %}Lista książek{% endblock %}
+{% block title %}Recenzarnia{% endblock %}
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="mb-0">Twoje książki w jednym miejscu!</h1>
         {% if user.is_staff %}
-            <a href="{% url 'add_book' %}" class="btn btn-success">+ Dodaj książkę</a>
+            <a href="{% url 'add_book' %}" class="btn btn-success"><i class="bi bi-plus"></i> Dodaj książkę</a>
         {% endif %}
     </div>
     <div class="mb-4">
@@ -81,10 +74,10 @@
     
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.previous_page_number }}">«</a>
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">«</span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
             {% endif %}
     
             {% for num in page_obj.paginator.page_range %}
@@ -101,10 +94,10 @@
     
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.next_page_number }}">»</a>
+                    <a class="page-link" href="?{% if chosen_cat %}category={{ chosen_cat }}&{% endif %}{% if search_phrase %}q={{ search_phrase }}&{% endif %}page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">»</span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
             {% endif %}
     
             {% if page_obj.has_next %}
